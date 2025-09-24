@@ -15,15 +15,20 @@
   <div class="container mx-auto px-4 py-6">
     <!-- Header -->
     <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-      <div class="flex items-center justify-center mb-4">
-        <div class="text-4xl mr-4">🎒</div>
-        <div class="text-center">
-          <h1 class="text-3xl font-bold text-indigo-800 mb-2">🏆 Matematik Ligi</h1>
+      <div class="flex items-center justify-between">
+        <div class="flex-1 flex items-center justify-center mb-4">
+          <div class="text-4xl mr-4">🎒</div>
           <div class="text-center">
-            <span class="text-gray-600 font-medium text-xl">Grup Aşaması</span>
+            <h1 class="text-3xl font-bold text-indigo-800 mb-2">🏆 Matematik Ligi</h1>
+            <div class="text-center">
+              <span class="text-gray-600 font-medium text-xl">Grup Aşaması</span>
+            </div>
           </div>
+          <div class="text-4xl ml-4">📚</div>
         </div>
-        <div class="text-4xl ml-4">📚</div>
+        <div class="flex items-center space-x-2">
+          <button id="editToggleBtn" class="hidden md:inline-flex bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1 rounded-lg text-sm"></button>
+        </div>
       </div>
       <div class="flex justify-center items-center space-x-4 text-2xl">
         <span>✏️</span>
@@ -68,7 +73,7 @@
       </div>
     </div>
 
-    <!-- Fixtures Tab -->
+    <!-- Fixtures Tab (Editör parolalı) -->
     <div id="fixtures" class="tab-content">
       <div class="bg-white rounded-lg shadow-lg p-6">
         <h2 class="text-2xl font-bold mb-4 text-gray-800">Fikstür ve Sonuçlar</h2>
@@ -82,7 +87,7 @@
       </div>
     </div>
 
-    <!-- Groups Tab -->
+    <!-- Groups Tab (Editör parolalı) -->
     <div id="groups" class="tab-content">
       <div class="bg-white rounded-lg shadow-lg p-6">
         <h2 class="text-2xl font-bold mb-4 text-gray-800">Grup Üyeleri</h2>
@@ -109,7 +114,11 @@
               </div>
               <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">İsimleri yapıştırın (her satırda bir isim):</label>
-                <textarea id="bulkNamesInput" placeholder="Ahmet\nMehmet\nAyşe\nFatma\n..." class="w-full h-32 border border-gray-300 rounded-lg px-3 py-2 resize-none" rows="6"></textarea>
+                <textarea id="bulkNamesInput" placeholder="Ahmet
+Mehmet
+Ayşe
+Fatma
+..." class="w-full h-32 border border-gray-300 rounded-lg px-3 py-2 resize-none" rows="6"></textarea>
               </div>
               <div class="flex space-x-3">
                 <button onclick="addBulkNames()" class="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium">✅ Ekle</button>
@@ -122,6 +131,22 @@
     </div>
   </div>
 
+  <!-- Şifre Modalı -->
+  <div id="passwordModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+      <div class="bg-white rounded-lg p-6 w-full max-w-sm">
+        <h3 class="text-lg font-bold mb-3">🔒 Düzenleme için parola gerekli</h3>
+        <p class="text-sm text-gray-600 mb-4">Lütfen parolayı girin.</p>
+        <input id="passwordInput" type="password" class="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2" placeholder="Parola" />
+        <p id="passwordError" class="hidden text-red-600 text-sm mb-2">Hatalı parola. Tekrar deneyin.</p>
+        <div class="flex space-x-2">
+          <button onclick="submitPassword()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium">Giriş</button>
+          <button onclick="closePassword()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium">İptal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase v10+ via ESM CDN -->
   <script type="module">
     // --- 1) Firebase Kurulumu ---
@@ -129,7 +154,7 @@
     import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.3/firebase-auth.js";
 
-    // 👉 BURAYI KENDİ PROJE BİLGİLERİNLE DOLDUR (Firebase Console > Project settings > Web app)
+    // 👉 KENDİ PROJE BİLGİLERİNİ BURAYA KOY
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -143,16 +168,35 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // Tüm lig verilerini tek bir dokümanda tutacağız
+    // Tüm lig verileri tek dokümanda
     const leagueDocRef = doc(db, "mathLeague", "default");
 
     // --- 2) Uygulama Durumu ---
     let leagueData = { groups: {}, fixtures: {}, results: {} };
-    let unsub = null; // real-time listener
+    let unsub = null; // realtime listener
 
-    // Grupları sayfaya çizen yardımcı
+    // Edit modu (parola ile açılır)
+    let EDIT_MODE = sessionStorage.getItem('EDIT_MODE') === 'true';
+    let pendingTab = null, pendingBtn = null; // parola sonrası açılacak sekme
+
+    // UI: Edit kilit butonu
+    function updateEditLockUI() {
+      const btn = document.getElementById('editToggleBtn');
+      if (!btn) return;
+      btn.classList.remove('hidden');
+      if (EDIT_MODE) {
+        btn.textContent = '🔓 Düzenleme açık (Çıkış)';
+        btn.onclick = () => { EDIT_MODE = false; sessionStorage.removeItem('EDIT_MODE'); updateEditLockUI(); showTab('standings'); };
+      } else {
+        btn.textContent = '🔒 Kilitli (Editöre gir)';
+        btn.onclick = () => { requirePasswordFor('groups'); };
+      }
+    }
+
+    // Grupları sayfaya çizer
     function initializeGroups() {
       const groupsContainer = document.getElementById('groupsGrid');
+      if (!groupsContainer) return;
       groupsContainer.innerHTML = '';
       for (let i = 1; i <= 14; i++) {
         const memberCount = i === 14 ? 6 : 8; // N grubu 6 kişilik
@@ -166,8 +210,9 @@
           <h3 class="font-bold text-lg mb-3 text-indigo-700">Grup ${groupLetter}</h3>
           ${Array(memberCount).fill(0).map((_, j) => `
             <input type="text" placeholder="Üye ${j + 1}" value="${leagueData.groups[groupLetter][j] || ''}"
+              ${EDIT_MODE ? '' : 'disabled'}
               onchange="updateGroupMember('${groupLetter}', ${j}, this.value)"
-              class="w-full mb-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+              class="w-full mb-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed">
           `).join('')}
         `;
         groupsContainer.appendChild(groupDiv);
@@ -179,39 +224,33 @@
       const fixtureSelect = document.getElementById('fixtureGroupSelect');
       const standingsSelect = document.getElementById('standingsGroupSelect');
       const bulkSelect = document.getElementById('bulkGroupSelect');
-      fixtureSelect.innerHTML = '<option value="">Grup seçin...</option>';
-      standingsSelect.innerHTML = '<option value="">Grup seçin...</option>';
+      if (fixtureSelect) fixtureSelect.innerHTML = '<option value="">Grup seçin...</option>';
+      if (standingsSelect) standingsSelect.innerHTML = '<option value="">Grup seçin...</option>';
       if (bulkSelect) bulkSelect.innerHTML = '<option value="">Grup seçin...</option>';
       Object.keys(leagueData.groups).forEach(group => {
-        for (const select of [fixtureSelect, standingsSelect, bulkSelect]) {
-          if (!select) continue;
-          const opt = document.createElement('option');
-          opt.value = group; opt.textContent = `Grup ${group}`; select.appendChild(opt);
-        }
+        if (fixtureSelect) { const o = document.createElement('option'); o.value = group; o.textContent = `Grup ${group}`; fixtureSelect.appendChild(o); }
+        if (standingsSelect) { const o = document.createElement('option'); o.value = group; o.textContent = `Grup ${group}`; standingsSelect.appendChild(o); }
+        if (bulkSelect) { const o = document.createElement('option'); o.value = group; o.textContent = `Grup ${group}`; bulkSelect.appendChild(o); }
       });
     }
 
-    // --- 3) Firestore'dan yükle & gerçek zamanlı dinle ---
+    // --- 3) Firestore: yükle & realtime dinle ---
     async function startRealtime() {
       const snap = await getDoc(leagueDocRef);
       if (snap.exists()) {
         leagueData = snap.data();
       } else {
-        // İlk kurulum: boş data yaz
         await setDoc(leagueDocRef, leagueData, { merge: true });
       }
-      // İlk render
       initializeGroups();
       populateGroupSelects();
+      updateEditLockUI();
 
-      // Gerçek zamanlı dinleme (başkası güncelleyince herkese yansısın)
       unsub = onSnapshot(leagueDocRef, (docSnap) => {
         if (docSnap.exists()) {
           leagueData = docSnap.data();
-          // UI'ı güncelle
           initializeGroups();
           populateGroupSelects();
-          // Seçili sekmedeki tablo/fixtür varsa yenile
           if (document.getElementById('standings').classList.contains('active')) showStandings();
           if (document.getElementById('fixtures').classList.contains('active')) showFixtures();
         }
@@ -227,7 +266,6 @@
     // --- 5) Firestore'a yazma yardımcıları ---
     let saveTimer = null;
     function scheduleSave() {
-      // Çok sık yazmayı önlemek için 400ms debounce
       clearTimeout(saveTimer);
       saveTimer = setTimeout(async () => {
         await setDoc(leagueDocRef, leagueData, { merge: true });
@@ -236,6 +274,7 @@
 
     // Global fonksiyonlar (HTML inline çağırıyor)
     window.updateGroupMember = (group, index, value) => {
+      if (!EDIT_MODE) return; // güvenlik: edit kapalıysa yazma
       if (!leagueData.groups[group]) leagueData.groups[group] = [];
       leagueData.groups[group][index] = value;
       scheduleSave();
@@ -243,10 +282,10 @@
     };
 
     window.saveGroups = () => {
-      // Input'lardaki değerleri okumak için küçük bir tur
+      if (!EDIT_MODE) return alert('🔒 Düzenleme kilitli. Parola ile giriş yapın.');
       document.querySelectorAll('#groups input[type="text"]').forEach((input) => {
         const oc = input.getAttribute('onchange');
-        if (oc) { try { eval(oc.replace('this.value', `\'${input.value.replace(/'/g, "\\'")}\'`)); } catch(e){} }
+        if (oc) { try { eval(oc.replace('this.value', `\'${input.value.replace(/'/g, "\'")}\'`)); } catch(e){} }
       });
       scheduleSave();
       alert('✅ Gruplar başarıyla kaydedildi!');
@@ -254,22 +293,25 @@
     };
 
     window.showBulkAdd = () => {
+      if (!EDIT_MODE) return alert('🔒 Düzenleme kilitli. Parola ile giriş yapın.');
       populateGroupSelects();
       document.getElementById('bulkAddModal').classList.remove('hidden');
     };
 
     window.closeBulkAdd = () => {
       document.getElementById('bulkAddModal').classList.add('hidden');
-      document.getElementById('bulkNamesInput').value = '';
-      document.getElementById('bulkGroupSelect').value = '';
+      const i1 = document.getElementById('bulkNamesInput'); if (i1) i1.value = '';
+      const i2 = document.getElementById('bulkGroupSelect'); if (i2) i2.value = '';
     };
 
     window.addBulkNames = () => {
+      if (!EDIT_MODE) return alert('🔒 Düzenleme kilitli. Parola ile giriş yapın.');
       const group = document.getElementById('bulkGroupSelect').value;
       const namesText = document.getElementById('bulkNamesInput').value;
       if (!group) return alert('❌ Lütfen bir grup seçin!');
       if (!namesText.trim()) return alert('❌ Lütfen isimleri girin!');
-      const names = namesText.split('\n').map(n => n.trim()).filter(Boolean);
+      const names = namesText.split('
+').map(n => n.trim()).filter(Boolean);
       const maxCapacity = group === 'N' ? 6 : 8;
       if (names.length > maxCapacity) {
         alert(`❌ Grup ${group} maksimum ${maxCapacity} kişi alabilir! Siz ${names.length} kişi girdiniz.`);
@@ -322,20 +364,22 @@
       content.innerHTML = `
         <div class="space-y-6">
           ${fixtures.map(week => `
-            <div class="border border-gray-200 rounded-lg p-4">
-              <h3 class="font-bold text-lg mb-3 text-indigo-700">${week.week}. Hafta</h3>
-              <div class="space-y-2">
+            <div class=\"border border-gray-200 rounded-lg p-4\">
+              <h3 class=\"font-bold text-lg mb-3 text-indigo-700\">${week.week}. Hafta</h3>
+              <div class=\"space-y-2\">
                 ${week.matches.map(match => `
-                  <div class="flex items-center space-x-2 bg-gray-50 p-3 rounded">
-                    <span class="flex-1 text-right font-medium">${match.home}</span>
-                    <input type="number" value="${leagueData.results[match.id]?.homeScore ?? ''}"
-                      onchange="updateScore('${match.id}', 'homeScore', this.value)"
-                      class="w-12 text-center border border-gray-300 rounded px-2 py-1">
-                    <span class="text-gray-500">-</span>
-                    <input type="number" value="${leagueData.results[match.id]?.awayScore ?? ''}"
-                      onchange="updateScore('${match.id}', 'awayScore', this.value)"
-                      class="w-12 text-center border border-gray-300 rounded px-2 py-1">
-                    <span class="flex-1 font-medium">${match.away}</span>
+                  <div class=\"flex items-center space-x-2 bg-gray-50 p-3 rounded\">
+                    <span class=\"flex-1 text-right font-medium\">${match.home}</span>
+                    <input type=\"number\" value=\"${leagueData.results[match.id]?.homeScore ?? ''}\"
+                      ${EDIT_MODE ? '' : 'disabled'}
+                      onchange=\"updateScore('${match.id}', 'homeScore', this.value)\"
+                      class=\"w-12 text-center border border-gray-300 rounded px-2 py-1 disabled:bg-gray-100 disabled:cursor-not-allowed\">
+                    <span class=\"text-gray-500\">-</span>
+                    <input type=\"number\" value=\"${leagueData.results[match.id]?.awayScore ?? ''}\"
+                      ${EDIT_MODE ? '' : 'disabled'}
+                      onchange=\"updateScore('${match.id}', 'awayScore', this.value)\"
+                      class=\"w-12 text-center border border-gray-300 rounded px-2 py-1 disabled:bg-gray-100 disabled:cursor-not-allowed\">
+                    <span class=\"flex-1 font-medium\">${match.away}</span>
                   </div>
                 `).join('')}
               </div>
@@ -346,6 +390,7 @@
     };
 
     window.updateScore = (matchId, scoreType, value) => {
+      if (!EDIT_MODE) return alert('🔒 Düzenleme kilitli. Parola ile giriş yapın.');
       if (!leagueData.results[matchId]) leagueData.results[matchId] = {};
       leagueData.results[matchId][scoreType] = value === '' ? '' : (parseInt(value) || 0);
       scheduleSave();
@@ -434,8 +479,52 @@
       `;
     };
 
-    // Sekmeler
-    window.showTab = (tabName, btn) => {
+    // --- Parola işlemleri ---
+    async function sha256hex(str) {
+      const enc = new TextEncoder().encode(str);
+      const digest = await crypto.subtle.digest('SHA-256', enc);
+      return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+    // "mat.asd" SHA-256
+    const PASSWORD_HASH = 'd91fc933c39c0f6ab74da0cfafd89d7b11342c8f3cb67bf2d5e0753553cc702b';
+
+    async function verifyPassword(pw) {
+      return (await sha256hex(pw)) === PASSWORD_HASH;
+    }
+
+    function requirePasswordFor(tabName, btn) {
+      pendingTab = tabName; pendingBtn = btn || null;
+      const m = document.getElementById('passwordModal');
+      document.getElementById('passwordError').classList.add('hidden');
+      document.getElementById('passwordInput').value = '';
+      m.classList.remove('hidden');
+      setTimeout(() => document.getElementById('passwordInput').focus(), 0);
+    }
+
+    window.submitPassword = async () => {
+      const val = document.getElementById('passwordInput').value;
+      const ok = await verifyPassword(val);
+      if (ok) {
+        EDIT_MODE = true; sessionStorage.setItem('EDIT_MODE','true');
+        document.getElementById('passwordModal').classList.add('hidden');
+        updateEditLockUI();
+        if (pendingTab) showTab(pendingTab, pendingBtn, true);
+      } else {
+        document.getElementById('passwordError').classList.remove('hidden');
+      }
+    };
+
+    window.closePassword = () => {
+      document.getElementById('passwordModal').classList.add('hidden');
+      pendingTab = null; pendingBtn = null;
+    };
+
+    // Sekmeler (parola kontrolü ile)
+    window.showTab = (tabName, btn, bypassCheck = false) => {
+      if (!bypassCheck && (tabName === 'groups' || tabName === 'fixtures') && !EDIT_MODE) {
+        requirePasswordFor(tabName, btn);
+        return;
+      }
       document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
       document.getElementById(tabName).classList.add('active');
       document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('text-indigo-600','border-b-2','border-indigo-600'); b.classList.add('text-gray-500'); });
@@ -445,10 +534,11 @@
       if (tabName === 'groups') { initializeGroups(); populateGroupSelects(); }
     };
 
-    // İlk yüklemede grupları/menüleri oluştur (boş veriyle)
+    // İlk yüklemede menüleri oluştur (boş veriyle) ve kilit durumunu göster
     document.addEventListener('DOMContentLoaded', () => {
       initializeGroups();
       populateGroupSelects();
+      updateEditLockUI();
     });
   </script>
 </body>
