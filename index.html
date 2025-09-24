@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Matematik Ligi Yönetim Sistemi — 6. Sınıflar</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Cache problemlerini azalt -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -32,18 +31,6 @@
       <div class="flex justify-center items-center space-x-4 text-2xl">
         <span>✏️</span><span>📝</span><span>🧮</span><span>📐</span><span>📏</span><span>🔢</span><span>➕</span><span>➖</span><span>✖️</span><span>➗</span>
       </div>
-    </div>
-
-    <!-- Üst araç çubuğu: Yedek indir / yükle -->
-    <div class="bg-white rounded-lg shadow mb-6 p-4 flex flex-wrap gap-2 items-center">
-      <button onclick="downloadBackup()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm">
-        💾 Yedeği İndir
-      </button>
-      <label class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm cursor-pointer">
-        📤 Yedekten Yükle
-        <input type="file" id="restoreInput" accept="application/json" class="hidden" onchange="restoreFromFile(event)" />
-      </label>
-      <span class="text-xs text-gray-500">Bu yedek dosyasını saklayıp başka bilgisayarlarda yükleyerek en güncel durumu taşıyabilirsin.</span>
     </div>
 
     <!-- Navigation Tabs -->
@@ -82,13 +69,22 @@
             <option value="">Grup seçin...</option>
           </select>
         </div>
+
+        <!-- Yedek İndir / Yükle — Fikstür içinde -->
+        <div class="mb-4 flex gap-2">
+          <button onclick="downloadBackup()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm">💾 Yedeği İndir</button>
+          <label class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm cursor-pointer">📤 Yedekten Yükle
+            <input type="file" id="restoreInput" accept="application/json" class="hidden" onchange="restoreFromFile(event)" />
+          </label>
+        </div>
+
         <div id="fixtureContent"></div>
       </div>
     </div>
   </div>
 
   <script>
-    // ---------- Kalıcı depolama anahtarı (6. sınıf için ayrı) ----------
+    // ---------- 6. sınıf için ayrı depolama anahtarı ----------
     const STORAGE_KEY = 'mathLeagueData6';
 
     // ---------- Veri Modeli ----------
@@ -330,7 +326,6 @@
     document.addEventListener('DOMContentLoaded', () => {
       loadData();
       createDownloadableBackup();
-      // Puan Durumu için ilk uygun grubu seç
       const sel = document.getElementById('standingsGroupSelect');
       if (sel && sel.options.length > 1) { sel.selectedIndex = 1; showStandings(); }
     });
