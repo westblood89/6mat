@@ -22,9 +22,7 @@
         <div class="text-4xl mr-4">🎒</div>
         <div class="text-center">
           <h1 class="text-3xl font-bold text-indigo-800 mb-2">🏆 Matematik Ligi</h1>
-          <div class="text-center">
-            <span class="text-gray-600 font-medium text-xl">6. Sınıflar Grup Aşaması</span>
-          </div>
+          <div class="text-center"><span class="text-gray-600 font-medium text-xl">6. Sınıflar Grup Aşaması</span></div>
         </div>
         <div class="text-4xl ml-4">📚</div>
       </div>
@@ -33,7 +31,7 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
+    <!-- Tabs -->
     <div class="bg-white rounded-lg shadow-lg mb-6">
       <div class="flex flex-wrap border-b">
         <button onclick="showTab('standings', this)" class="tab-btn px-4 py-3 font-medium text-indigo-600 border-b-2 border-indigo-600">
@@ -45,7 +43,7 @@
       </div>
     </div>
 
-    <!-- Standings Tab -->
+    <!-- Standings -->
     <div id="standings" class="tab-content active">
       <div class="bg-white rounded-lg shadow-lg p-6">
         <h2 class="text-2xl font-bold mb-4 text-gray-800">Puan Durumu</h2>
@@ -59,7 +57,7 @@
       </div>
     </div>
 
-    <!-- Fixtures Tab -->
+    <!-- Fixtures -->
     <div id="fixtures" class="tab-content">
       <div class="bg-white rounded-lg shadow-lg p-6">
         <h2 class="text-2xl font-bold mb-4 text-gray-800">Fikstür ve Sonuçlar</h2>
@@ -70,7 +68,7 @@
           </select>
         </div>
 
-        <!-- Yedek İndir / Yükle — Fikstür içinde -->
+        <!-- Yedek İndir / Yükle (Fikstür içinde) -->
         <div class="mb-4 flex gap-2">
           <button onclick="downloadBackup()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm">💾 Yedeği İndir</button>
           <label class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm cursor-pointer">📤 Yedekten Yükle
@@ -84,7 +82,7 @@
   </div>
 
   <script>
-    // ---------- 6. sınıf için ayrı depolama anahtarı ----------
+    // ---------- Ayrı depolama anahtarı ----------
     const STORAGE_KEY = 'mathLeagueData6';
 
     // ---------- Veri Modeli ----------
@@ -95,10 +93,8 @@
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(leagueData));
         createDownloadableBackup();
-        console.log('Veriler kaydedildi');
       } catch (e) {
         console.error('Veri kaydetme hatası:', e);
-        alert('❌ Veriler kaydedilemedi!');
       }
     }
 
@@ -106,9 +102,9 @@
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         try { leagueData = JSON.parse(saved) || leagueData; }
-        catch (e) { console.error('Veri yükleme hatası', e); leagueData = { groups: {}, fixtures: {}, results: {} }; }
+        catch { leagueData = { groups: {}, fixtures: {}, results: {} }; }
       } else {
-        initializeWithSampleData(); // ilk kurulum
+        initializeWithSampleData();
         saveData();
       }
       initializeGroups();
@@ -141,7 +137,7 @@
       reader.readAsText(f);
     }
 
-    // ---------- Örnek Gruplar ----------
+    // ---------- Örnek Gruplar (N: 7 kişi) ----------
     function initializeWithSampleData() {
       leagueData.groups['A'] = ['BADE ŞAHİN','MEHMET YAMAN MUMCU','KERİM MERT POLAT','PARS ERTAŞ','MERT RIZGAR YEŞİLMEN','ELİF SARE GENÇALP','MERT ALİ ÜNLÜ','KEREM SAYAR'];
       leagueData.groups['B'] = ['MİRA TEMÜR','KUZEY PEKŞEN','YUSUF GÖKALP SAKARYA','LİLA ERGÜN','DURU MİRA ÖDÜL','DEMİR ALİ KABAKTAŞ','EVİN İPEK ÖZGEN','EFE ÇAĞLAR'];
@@ -156,13 +152,13 @@
       leagueData.groups['K'] = ['SARP SALİHOĞLU','SARE YILMAZ','KUZEY MERT YILMAZ','ZEYNEP ARSLAN','BARDIA ESHRATABADY','ERDAL ATİLLA ŞAKAR','MİRZA ÖZBEKLİ','AYAZ ALİ YILDIRIM'];
       leagueData.groups['L'] = ['BERKEN AREL AYAZ','ÖMER KALEBAŞ','ECE NUR EGE','KERİM KARKIN','EGEMEN ÇALIŞKAN','YAĞIZ AVCI','DERİN YALÇINKAYA','ATLAS DENİZ ÇELİK'];
       leagueData.groups['M'] = ['DENİZ EROL BAŞARSLAN','ÖYKÜ CAP','ECE KÜÇÜKDALGIÇ','NAZLI USKUÇ','KAYRA GÖZÜBÜYÜK','YAŞAR YAMAN YOLCU','İLAY MELEK MEYDAN','AYŞE SERRA KARTAL'];
-      leagueData.groups['N'] = ['ALP ALTINTAŞ','ADA ERAKPINAR','BADE SEZGİN','DORUK DOĞAN','DURU SAĞDIÇ','ELA YILMAZ'];
+      leagueData.groups['N'] = ['ALP ALTINTAŞ','ADA ERAKPINAR','BADE SEZGİN','DORUK DOĞAN','DURU SAĞDIÇ','ELA YILMAZ','GÜNEY ŞİMŞEK']; // 7 kişi
     }
 
     // ---------- Yardımcılar ----------
     function initializeGroups() {
       'ABCDEFGHIJKLMN'.split('').forEach(letter => {
-        const cap = letter === 'N' ? 6 : 8;
+        const cap = letter === 'N' ? 7 : 8;
         if (!leagueData.groups[letter]) leagueData.groups[letter] = Array(cap).fill('');
       });
     }
@@ -181,14 +177,23 @@
       });
     }
 
+    // Basit ve güvenli fikstür üretici (haftada oyuncu başına 1 maç)
     function generateFixtures(group) {
       const members = (leagueData.groups[group] || []).filter(m => m.trim() !== '');
       const n = members.length; if (n < 2) return [];
-      const fixtures = []; const totalWeeks = n % 2 === 0 ? n - 1 : n;
+      const fixtures = [];
+      const totalWeeks = n % 2 === 0 ? n - 1 : n; // tek sayıda ise bir kişi dinlenir
       for (let w = 1; w <= totalWeeks; w++) fixtures.push({ week: w, matches: [] });
-      let matchId = 0; const allMatches = [];
-      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) allMatches.push({ id: `${group}_${matchId++}`, home: members[i], away: members[j] });
-      let wi = 0; for (const m of allMatches) {
+
+      // tüm olası maçları listele
+      let matchId = 0;
+      const allMatches = [];
+      for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++)
+        allMatches.push({ id: `${group}_${matchId++}`, home: members[i], away: members[j] });
+
+      // maçları haftalara yerleştir (aynı haftada aynı oyuncu 1 kez)
+      let wi = 0;
+      for (const m of allMatches) {
         let placed = false, tries = 0;
         while (!placed && tries < totalWeeks) {
           const week = fixtures[wi];
@@ -204,8 +209,10 @@
       const group = document.getElementById('fixtureGroupSelect').value;
       const content = document.getElementById('fixtureContent');
       if (!group) { content.innerHTML = '<p class="text-gray-500">Lütfen bir grup seçin.</p>'; return; }
-      if (!leagueData.fixtures[group]) leagueData.fixtures[group] = generateFixtures(group);
+      // Güncel üyelere göre üret / yoksa üret
+      leagueData.fixtures[group] = generateFixtures(group);
       const fixtures = leagueData.fixtures[group];
+
       content.innerHTML = `
         <div class="space-y-6">
           ${fixtures.map(week => `
@@ -215,12 +222,12 @@
                 ${week.matches.map(match => `
                   <div class="flex items-center space-x-2 bg-gray-50 p-3 rounded">
                     <span class="flex-1 text-right font-medium">${match.home}</span>
-                    <input type="number" 
+                    <input type="number"
                            value="${leagueData.results[match.id]?.homeScore ?? ''}"
                            onchange="updateScore('${match.id}', 'homeScore', this.value)"
                            class="w-12 text-center border border-gray-300 rounded px-2 py-1">
                     <span class="text-gray-500">-</span>
-                    <input type="number" 
+                    <input type="number"
                            value="${leagueData.results[match.id]?.awayScore ?? ''}"
                            onchange="updateScore('${match.id}', 'awayScore', this.value)"
                            class="w-12 text-center border border-gray-300 rounded px-2 py-1">
@@ -233,6 +240,7 @@
         </div>`;
     }
 
+    // Skoru yazarken uyarı göstermez; iki taraf da dolunca tabloya yansır
     function updateScore(matchId, scoreType, value) {
       if (!leagueData.results[matchId]) leagueData.results[matchId] = {};
       leagueData.results[matchId][scoreType] = value === '' ? '' : (parseInt(value) || 0);
@@ -244,28 +252,36 @@
     function calculateStandings(group) {
       const members = (leagueData.groups[group] || []).filter(m => m.trim() !== '');
       const standings = members.map(member => ({ name: member, played: 0, won: 0, drawn: 0, lost: 0, correct: 0, wrong: 0, goalDifference: 0, points: 0 }));
+
       Object.keys(leagueData.results).forEach(matchId => {
         if (!matchId.startsWith(group + '_')) return;
         const result = leagueData.results[matchId];
         if (result.homeScore === '' || result.awayScore === '' || result.homeScore == null || result.awayScore == null) return;
+
         const homeScore = parseInt(result.homeScore) || 0;
         const awayScore = parseInt(result.awayScore) || 0;
+
         const fixtures = leagueData.fixtures[group] || [];
         let homeTeam, awayTeam;
         fixtures.forEach(week => week.matches.forEach(match => { if (match.id === matchId) { homeTeam = match.home; awayTeam = match.away; } }));
         if (!homeTeam || !awayTeam) return;
-        const homeIndex = standings.findIndex(s => s.name === homeTeam);
-        const awayIndex = standings.findIndex(s => s.name === awayTeam);
-        if (homeIndex === -1 || awayIndex === -1) return;
-        standings[homeIndex].played++; standings[awayIndex].played++;
-        standings[homeIndex].correct += homeScore; standings[homeIndex].wrong += awayScore;
-        standings[awayIndex].correct += awayScore; standings[awayIndex].wrong += homeScore;
-        if (homeScore > awayScore) { standings[homeIndex].won++; standings[homeIndex].points += 3; standings[awayIndex].lost++; }
-        else if (homeScore < awayScore) { standings[awayIndex].won++; standings[awayIndex].points += 3; standings[homeIndex].lost++; }
-        else { standings[homeIndex].drawn++; standings[awayIndex].drawn++; standings[homeIndex].points++; standings[awayIndex].points++; }
-        standings[homeIndex].goalDifference = standings[homeIndex].correct - standings[homeIndex].wrong;
-        standings[awayIndex].goalDifference = standings[awayIndex].correct - standings[awayIndex].wrong;
+
+        const hi = standings.findIndex(s => s.name === homeTeam);
+        const ai = standings.findIndex(s => s.name === awayTeam);
+        if (hi === -1 || ai === -1) return;
+
+        standings[hi].played++; standings[ai].played++;
+        standings[hi].correct += homeScore; standings[hi].wrong += awayScore;
+        standings[ai].correct += awayScore; standings[ai].wrong += homeScore;
+
+        if (homeScore > awayScore) { standings[hi].won++; standings[hi].points += 3; standings[ai].lost++; }
+        else if (homeScore < awayScore) { standings[ai].won++; standings[ai].points += 3; standings[hi].lost++; }
+        else { standings[hi].drawn++; standings[ai].drawn++; standings[hi].points++; standings[ai].points++; }
+
+        standings[hi].goalDifference = standings[hi].correct - standings[hi].wrong;
+        standings[ai].goalDifference = standings[ai].correct - standings[ai].wrong;
       });
+
       standings.sort((a, b) => (b.points - a.points) || (b.goalDifference - a.goalDifference) || (b.correct - a.correct));
       return standings;
     }
@@ -275,7 +291,8 @@
       const content = document.getElementById('standingsContent');
       if (!group) { content.innerHTML = '<p class="text-gray-500">Lütfen bir grup seçin.</p>'; return; }
       const standings = calculateStandings(group);
-      const qualifyCount = group === 'N' ? 3 : 4;
+      const qualifyCount = 4; // N dahil ilk 4
+
       content.innerHTML = `
         <div class="overflow-x-auto">
           <table class="w-full border-collapse border border-gray-300">
@@ -326,6 +343,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       loadData();
       createDownloadableBackup();
+      // Puan Durumu için ilk uygun grubu otomatik seç
       const sel = document.getElementById('standingsGroupSelect');
       if (sel && sel.options.length > 1) { sel.selectedIndex = 1; showStandings(); }
     });
